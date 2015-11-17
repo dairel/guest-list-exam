@@ -3,65 +3,53 @@ require 'vendor/autoload.php';
 require 'database/ConnectionFactory.php';
 require 'tasks/TaskService.php';
 
-
 $app = new \Slim\Slim();
-// http://hostname/api/
-$app->get('/', function() use ( $app ) {
-    echo "Welcome to Guest List REST API";
-});
-
-
-$app->get('/guests/', function() use ( $app ) {
-    $guests = TaskService::listguests();
-    $app->response()->header('Content-Type', 'application/json');
+$app->get('/guest', function() use ($app){
+    $db = ConnectionFactory::getDB();
+    
+    $guests = array();
+    foreach($db->guests() as $guests){
+        $guests[] = array(
+            'id' => $guest["id"],
+            'name' => $guest['name'], 
+            'email' => $guest['email']
+        );
+    }
+    
+    $app->response()->header('Content-Type','application/json');
     echo json_encode($guests);
 });
-
-
-$app->get('/guests/:id', function($id) use ( $app ) {
-    $guests = TaskService::getById($id);
-    
-    if($guests) {
-        $app->response()->header('Content-Type', 'application/json');
-        echo json_encode($guests);
-    }
-    else {
-        $app->response()->setStatus(204);
-    }
+$app->post('/guest', function () use ( $app ) {
+	$db = ConnectionFactory::getDB();
+	
+	$guestToAdd = json_decode($app->request->getBody(), true);
+	$guest = $db->guests->insert($guestToAdd);
+	
+	$app->response->header('Content-Type', 'application/json');
+	echo json_encode($guest);
 });
-
-
-$app->post('/guests/', function() use ( $app ) {
-    $guestsJson = $app->request()->getBody();
-    $newguests = json_decode($guestsJson, true);
-    if($newguests) {
-        $guests = TaskService::add($newguests);
-        echo "Task {$guests['name']} added";
-    }
-    else {
-        $app->response->setStatus(400);
-        echo "Malformat JSON";
-    }
+$app->delete('/guest/:name', function($name) use ( $app ) { 
+	$db = ConnectionFactory::getDB();
+	$response = "";
+	
+	$guest = $db->guests()->where('name', $name);
+	
+	if($guest->fetch()) {
+		$result = $guest->delete();
+		$response = array(
+			'status' => 'true',
+			'message' => 'People Deleted'
+		);
+	}
+	else {
+		$response = array(
+			'status' => 'false',
+			'message' => 'people not exists'
+		);
+		$app->response->setStatus(404);
+	}
+	
+	$app->response()->header('Content-Type', 'application/json');
+	echo json_encode($response);
 });
-
-$app->put('/guests/', function() use ( $app ) {
-    $guestsJson = $app->request()->getBody();
-    $updatedguests = json_decode($guestsJson, true);
-    
-    if($updatedguests && $updatedguests['id']) {
-        if(TaskService::update($updatedguests)) {
-          echo "guests {$updatedguests['name']} updated";  
-        }
-        else {
-          $app->response->setStatus('404');
-          echo "People not found";
-        }
-    }
-    else {
-        $app->response->setStatus(400);
-        echo "Malformat JSON";
-    }
-});
-
-$app->run();
 ?>
