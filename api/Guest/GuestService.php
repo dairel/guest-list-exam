@@ -1,5 +1,5 @@
 <?php
-class TaskService {
+class GuestService {
       public static function listGuest() {
         $db = ConectionFactory::getDB();
         $guest = array();
