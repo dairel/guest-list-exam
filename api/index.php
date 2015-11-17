@@ -1,10 +1,10 @@
 <?php
 require 'vendor/autoload.php';
 require 'database/ConnectionFactory.php';
-require 'tasks/TaskService.php';
+require 'Guest/GuestService.php';
 
 $app = new \Slim\Slim();
-$app->get('/guest', function() use ($app){
+$app->get('/guest/', function() use ($app){
     $db = ConnectionFactory::getDB();
     
     $guests = array();
@@ -19,6 +19,7 @@ $app->get('/guest', function() use ($app){
     $app->response()->header('Content-Type','application/json');
     echo json_encode($guests);
 });
+
 $app->post('/guest', function () use ( $app ) {
 	$db = ConnectionFactory::getDB();
 	
