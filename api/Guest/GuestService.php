@@ -1,37 +1,55 @@
 <?php
 class GuestService {
-      public static function listGuest() {
-        $db = ConectionFactory::getDB();
-        $guest = array();
+    
+    public static function listGuests() {
+            $db = ConnectionFactory::getDB();
         
-        foreach($db->guests() as $guest) {
-           $guests[] = array (
-               'id' => $guests['id'],
-               'nome' => $guests['nome'],
-               'email' => $guests['email']
-           ); 
-        }
+            $guests = array();
+                foreach($db->guests() as $guest) {
+                $guests[] = array (
+                    'id' => $guest['id'],
+                    'name' => $guest['name'],
+                    'email' => $guest['email']
+                ); 
+            }
         
-        return $guests;
-    }
-       public static function add($newguests) {
-         $db = ConnectionFactory::getDB();
-         $guests = $db->guests->insert($newGuest);
-        
-         return $guest;
+            return $guests;
     }
     
-    public static function update($updatedguest) {
-        $db = ConnectionFactory::getDB();
-        $guests = $db->guests[$updatedguest['id']];
+    public static function getById($id) {
+            $db = ConnectionFactory::getDB();
+            return $db->guests[$id];
+    }
+    
+    public static function add($newGuest) {
+            $db = ConnectionFactory::getDB();
+            $guest = $db->guests->insert($newGuest);
+            return $guest;
+    }
+    
+    public static function update($updatedGuest) {
+            $db = ConnectionFactory::getDB();
+            $guest = $db->guests[$updatedGuest['id']];
         
-        if($guests) {
-            $guests['name]'] = $updatedguest['name'];
-            $guests['email'] = $updatedguest['email'];
-            return true;
-        }
+                if($guest) {
+                    $guest['name'] = $updatedGuest['name'];
+                    $guest['email'] = $updatedGuest['email'];
+                    $guest->update();
+                    return true;
+                }
         
-        return false;
+            return false;
+    }
+    
+    public static function delete($id) {
+            $db = ConnectionFactory::getDB();
+            $guest = $db->guests[$id];
+                if($guest) {
+                $guest->delete();
+                return true;
+                }
+                
+            return false;
     }
 }
 ?>

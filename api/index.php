@@ -1,56 +1,71 @@
 <?php
 require 'vendor/autoload.php';
 require 'database/ConnectionFactory.php';
-require 'Guest/GuestService.php';
+require 'guests/GuestService.php';
 
 $app = new \Slim\Slim();
-$app->get('/guest/', function() use ($app){
-    $db = ConnectionFactory::getDB();
-    
-    $guests = array();
-    foreach($db->guests() as $guests){
-        $guests[] = array(
-            'id' => $guest["id"],
-            'name' => $guest['name'], 
-            'email' => $guest['email']
-        );
-    }
-    
-    $app->response()->header('Content-Type','application/json');
-    echo json_encode($guests);
+// http://hostname/api/
+$app->get('/', function() use ( $app ) {
+    echo "Welcome to Guest REST API ";
 });
 
-$app->post('/guest', function () use ( $app ) {
-	$db = ConnectionFactory::getDB();
-	
-	$guestToAdd = json_decode($app->request->getBody(), true);
-	$guest = $db->guests->insert($guestToAdd);
-	
-	$app->response->header('Content-Type', 'application/json');
-	echo json_encode($guest);
+  
+$app->get('/guests/', function() use ( $app ) {
+    $guests = GuestService::listGuests();
+    $app->response()->header('Content-Type', 'application/json');
+    echo json_encode($guests);
 });
-$app->delete('/guest/:name', function($name) use ( $app ) { 
-	$db = ConnectionFactory::getDB();
-	$response = "";
-	
-	$guest = $db->guests()->where('name', $name);
-	
-	if($guest->fetch()) {
-		$result = $guest->delete();
-		$response = array(
-			'status' => 'true',
-			'message' => 'People Deleted'
-		);
-	}
-	else {
-		$response = array(
-			'status' => 'false',
-			'message' => 'people not exists'
-		);
-		$app->response->setStatus(404);
-	}
-	
-	$app->response()->header('Content-Type', 'application/json');
-	echo json_encode($response);
+$app->get('/guests/:id', function($id) use ( $app ) {
+    $guest = GuestService::getById($id);
+    
+    if($guest) {
+        $app->response()->header('Content-Type', 'application/json');
+        echo json_encode($guest);
+    }
+    else {
+        $app->response()->setStatus(204);
+    }
 });
+
+$app->post('/guests/', function() use ( $app ) {
+    $guestJson = $app->request()->getBody();
+    $newGuest = json_decode($guestJson, true);
+    if($newGuest) {
+        $guest = GuestService::add($newGuest);
+        echo "Guest {$guest['name']} added on database";
+    }
+    else {
+        $app->response->setStatus(400);
+        echo "Invalid JSON";
+    }
+});
+$app->put('/guests/', function() use ( $app ) {
+    $guestJson = $app->request()->getBody();
+    $updatedGuest = json_decode($guestJson, true);
+    
+    if($updatedguest && $updatedguest['id']) {
+        if(GuestService::update($updatedguest)) {
+          echo "Guest {$updatedGuest['name']} updated on database";  
+        }
+        else {
+          $app->response->setStatus('404');
+          echo "Guest not found";
+        }
+    }
+    else {
+        $app->response->setStatus(400);
+        echo "Invalido ";
+    }
+});
+
+$app->delete('/guests/:id', function($id) use ( $app ) {
+    if(GuestService::delete($id)) {
+      echo "deletado!";
+    }
+    else {
+      $app->response->setStatus('404');
+      echo "Guest not exist";
+    }
+});
+$app->run();
 ?>
